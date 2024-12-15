@@ -1,0 +1,3 @@
+[submodule "pokemon-vgc-engine"]
+	path = pokemon-vgc-engine
+	url = https://gitlab.com/DracoStriker/pokemon-vgc-engine.git
