@@ -14,7 +14,7 @@ From [https://gitlab.com/DracoStriker/pokemon-vgc-engine](https://gitlab.com/Dra
 
 Run the following commands to install vgc as a package in your venv:
 ```bash
-cd pokemon-vgc-egine
+cd pokemon-vgc-engine
 pip install .
 ```
 
