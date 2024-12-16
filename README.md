@@ -31,5 +31,5 @@ In another terminal:
 ```bash
 cd pokemon-vgc-engine/vgc/ux
 # Start the GUI
-python python PkmBattleClientTest.py
+python PkmBattleClientTest.py
 ```

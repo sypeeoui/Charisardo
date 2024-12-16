@@ -1,0 +1,1 @@
+from .own_team_generator import OwnRandomTeamGenerator

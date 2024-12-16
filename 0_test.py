@@ -10,7 +10,7 @@ from vgc.behaviour.TeamSelectionPolicies import RandomTeamSelectionPolicy
 from vgc.util.generator.PkmRosterGenerators import RandomPkmRosterGenerator
 from vgc.util.generator.PkmTeamGenerators import RandomTeamGenerator
 from multiprocessing.connection import Client
-from own_team_generator import OwnRandomTeamGenerator
+from utils import OwnRandomTeamGenerator
 
 
 gen = OwnRandomTeamGenerator()
@@ -39,3 +39,4 @@ while battle < n_battles:
     t = False
     battle += 1
 print(env.winner)  # winner id number
+
