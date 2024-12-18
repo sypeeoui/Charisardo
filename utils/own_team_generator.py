@@ -22,7 +22,7 @@ class OwnRandomTeamGenerator(PkmTeamGenerator):
         for i in range(self.party_size + 1):
             p_type: PkmType = random.choice(LIST_OF_TYPES)
             # generate random hp with normal distribution but not less than 100
-            max_hp: float = max(100, np.random.normal(300, 100))
+            max_hp: float = min(max(50, np.random.normal(140, 50)), 240)
             moves: List[PkmMove] = []
             for i in range(DEFAULT_PKM_N_MOVES):
                 # generate random type for move

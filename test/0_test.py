@@ -10,6 +10,11 @@ from vgc.behaviour.TeamSelectionPolicies import RandomTeamSelectionPolicy
 from vgc.util.generator.PkmRosterGenerators import RandomPkmRosterGenerator
 from vgc.util.generator.PkmTeamGenerators import RandomTeamGenerator
 from multiprocessing.connection import Client
+
+import sys, os
+# add relative parent directory to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from utils import OwnRandomTeamGenerator
 
 
