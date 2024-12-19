@@ -5,6 +5,7 @@ from vgc.datatypes.Constants import DEFAULT_PKM_N_MOVES, DEFAULT_PARTY_SIZE, TYP
 from vgc.datatypes.Objects import GameState
 from vgc.engine.PkmBattleEnv import PkmBattleEnv
 from vgc.datatypes.Types import PkmStat, PkmType, WeatherCondition
+from multiprocessing import Pool
 
 class Node:
 
@@ -43,19 +44,41 @@ class PrunedTreeSearch(BattlePolicy):
         # print(f"HP: {my_sum_hp}, {opp_sum_hp}")
         # print(f"Max HP: {my_sum_max_hp}, {opp_sum_max_hp}")
         return my_sum_hp / my_sum_max_hp * self.weights[0] - opp_sum_hp / opp_sum_max_hp * self.weights[1]
-    
-    def get_action(self, env: PkmBattleEnv, depth: int = 6) -> int: 
+
+    def get_action(self, env: PkmBattleEnv, depth: int = 2, instances: int = 50) -> int:
         """
-        Determines the action to take in the given Pokémon battle environment.
+        Determines the best action to take in the given environment using a pruned tree search.
         Args:
-            env (PkmBattleEnv): The current state of the Pokémon battle environment.
+            env (PkmBattleEnv): The Pokémon battle environment.
+            depth (int, optional): The depth of the search tree. Defaults to 2.
+            instances (int, optional): The number of instances to run in parallel. Defaults to 8.
         Returns:
-            The action to be taken in the given environment.
+            int: The index of the best action to take.
         """
-        env = deepcopy(env)
+        moves = [0 for _ in range(DEFAULT_N_ACTIONS)]
+
+        with Pool() as pool:
+            results = pool.map(self.estimate_move, [(env, depth) for i in range(instances)], chunksize=1)
+
+        for result in results:
+            moves[result] += 1
+
+        return moves.index(max(moves))
+
+    def estimate_move(self, params) -> int: 
+        """
+        Determines the best action to take based on the given parameters using a pruned tree search algorithm.
+        Args:
+            params (list): A list containing the environment and depth multiplier. 
+                           params[0] is the environment object which will be deep-copied.
+                           params[1] is an integer representing the depth multiplier for the search tree.
+        Returns:
+            int: The move determined to be the best action after performing the alpha-beta pruning search.
+        """
+        env = deepcopy(params[0])
         root = Node()
         root.env = env
-        root.depth = depth
+        root.depth = params[1] * 2
 
         for team in root.env.teams:
             for move in team.active.moves:
@@ -84,32 +107,7 @@ class PrunedTreeSearch(BattlePolicy):
 
         # print(node.env.teams[0].active.moves[0].acc) 
         if node.depth == 0:
-            # my_move = node.parent.move
-            # opp_move = node.move
-            # if my_move >= 4:
-            #     my_acc = 1
-            # else:
-            #     my_acc = node.parent.env.teams[0].active.moves[my_move].real_acc
-            # if opp_move >= 4:
-            #     opp_acc = 1
-            # else:
-            #     opp_acc = node.parent.env.teams[1].active.moves[opp_move].real_acc
-
-            # g_copy = deepcopy(node.parent.env)
-            # s, _, _, _, _ = g_copy.step([99, opp_move]) # I skip
-            # eval_iskip = self.game_state_eval(g_copy)
-
-            # g_copy = deepcopy(node.parent.env)
-            # s, _, _, _, _ = g_copy.step([my_move, 99]) # Opponent skips
-            # eval_oppskip = self.game_state_eval(g_copy)
-            
             eval_allhit = self.game_state_eval(node.env)
-
-            # eval_nohit = self.game_state_eval(node.parent.env)
-
-            # new_eval = my_acc * opp_acc * eval_allhit + (1 - my_acc) * opp_acc * eval_iskip + \
-            #     my_acc * (1 - opp_acc) * eval_oppskip + (1 - my_acc) * (1 - opp_acc) * eval_nohit
-            
             node.eval = eval_allhit
             return node
         
