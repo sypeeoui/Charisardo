@@ -36,9 +36,9 @@ class PrunedTreeSearch(BattlePolicy):
         opp_sum_max_hp = opp_team.active.max_hp + sum([p.max_hp for p in opp_team.party])
         
         if my_sum_hp == 0.0:
-            return float('-inf')
+            return float('-1')
         elif opp_sum_hp == 0.0:
-            return float('inf')
+            return float('1')
         
         # print(f"HP: {my_sum_hp}, {opp_sum_hp}")
         # print(f"Max HP: {my_sum_max_hp}, {opp_sum_max_hp}")
@@ -82,35 +82,35 @@ class PrunedTreeSearch(BattlePolicy):
             Node: The node with the best evaluated move for the current player.
         """
 
-        print(node.env.teams[0].active.moves[0].acc) 
+        # print(node.env.teams[0].active.moves[0].acc) 
         if node.depth == 0:
-            my_move = node.parent.move
-            opp_move = node.move
-            if my_move >= 4:
-                my_acc = 1
-            else:
-                my_acc = node.parent.env.teams[0].active.moves[my_move].real_acc
-            if opp_move >= 4:
-                opp_acc = 1
-            else:
-                opp_acc = node.parent.env.teams[1].active.moves[opp_move].real_acc
+            # my_move = node.parent.move
+            # opp_move = node.move
+            # if my_move >= 4:
+            #     my_acc = 1
+            # else:
+            #     my_acc = node.parent.env.teams[0].active.moves[my_move].real_acc
+            # if opp_move >= 4:
+            #     opp_acc = 1
+            # else:
+            #     opp_acc = node.parent.env.teams[1].active.moves[opp_move].real_acc
 
-            g_copy = deepcopy(node.parent.env)
-            s, _, _, _, _ = g_copy.step([99, opp_move]) # I skip
-            eval_iskip = self.game_state_eval(g_copy)
+            # g_copy = deepcopy(node.parent.env)
+            # s, _, _, _, _ = g_copy.step([99, opp_move]) # I skip
+            # eval_iskip = self.game_state_eval(g_copy)
 
-            g_copy = deepcopy(node.parent.env)
-            s, _, _, _, _ = g_copy.step([my_move, 99]) # Opponent skips
-            eval_oppskip = self.game_state_eval(g_copy)
+            # g_copy = deepcopy(node.parent.env)
+            # s, _, _, _, _ = g_copy.step([my_move, 99]) # Opponent skips
+            # eval_oppskip = self.game_state_eval(g_copy)
             
             eval_allhit = self.game_state_eval(node.env)
 
-            eval_nohit = self.game_state_eval(node.parent.env)
+            # eval_nohit = self.game_state_eval(node.parent.env)
 
-            new_eval = my_acc * opp_acc * eval_allhit + (1 - my_acc) * opp_acc * eval_iskip + \
-                my_acc * (1 - opp_acc) * eval_oppskip + (1 - my_acc) * (1 - opp_acc) * eval_nohit
+            # new_eval = my_acc * opp_acc * eval_allhit + (1 - my_acc) * opp_acc * eval_iskip + \
+            #     my_acc * (1 - opp_acc) * eval_oppskip + (1 - my_acc) * (1 - opp_acc) * eval_nohit
             
-            node.eval = new_eval
+            node.eval = eval_allhit
             return node
         
         if maximizing_player:
@@ -122,8 +122,26 @@ class PrunedTreeSearch(BattlePolicy):
                 max_player_node.env = deepcopy(node.env)
                 max_player_node.parent = node
                 max_player_node.depth = node.depth - 1
-                min_player_node = self.alpha_beta(max_player_node, alpha, beta, False)
-                best_node = max(best_node, min_player_node, key=lambda x: x.eval)
+                min_player_node1 = self.alpha_beta(max_player_node, alpha, beta, False)
+
+                if i < 4:
+                    max_player_node = Node()
+                    max_player_node.move = 99
+                    max_player_node.env = deepcopy(node.env)
+                    max_player_node.parent = node
+                    max_player_node.depth = node.depth - 1
+                    min_player_node2 = self.alpha_beta(max_player_node, alpha, beta, False)
+
+                    eval1 = min_player_node1.eval * node.env.teams[0].active.moves[i].real_acc
+                    eval2 = min_player_node2.eval * (1 - node.env.teams[0].active.moves[i].real_acc)
+                    avg = eval1 + eval2
+                else:
+                    avg = min_player_node1.eval
+
+                if avg > best_node.eval:
+                    best_node = min_player_node1
+                    best_node.eval = avg
+
                 if beta <= best_node.eval:
                     break
                 alpha = max(alpha, best_node.eval)
@@ -139,8 +157,27 @@ class PrunedTreeSearch(BattlePolicy):
                 min_player_node.parent = node
                 min_player_node.depth = node.depth - 1
                 min_player_node.env.step([node.move, i])
-                max_player_node = self.alpha_beta(min_player_node, alpha, beta, True)
-                best_node = min(best_node, max_player_node, key=lambda x: x.eval)
+                max_player_node1 = self.alpha_beta(min_player_node, alpha, beta, True)
+
+                if i < 4:
+                    min_player_node = Node()
+                    min_player_node.move = 99
+                    min_player_node.env = deepcopy(node.env)
+                    min_player_node.parent = node
+                    min_player_node.depth = node.depth - 1
+                    min_player_node.env.step([node.move, 99])
+                    max_player_node2 = self.alpha_beta(min_player_node, alpha, beta, True)
+
+                    eval1 = max_player_node1.eval * node.env.teams[1].active.moves[i].real_acc
+                    eval2 = max_player_node2.eval * (1 - node.env.teams[1].active.moves[i].real_acc)
+                    avg = eval1 + eval2
+                else:
+                    avg = max_player_node1.eval
+                
+                if avg < best_node.eval:
+                    best_node = max_player_node1
+                    best_node.eval = avg
+
                 if beta <= alpha:
                     break
                 beta = min(beta, best_node.eval)
