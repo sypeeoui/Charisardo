@@ -66,18 +66,19 @@ elif mode == "pts_sequential":
     n = len(policies)
     n_battles = 100
     n_battles_per_file = 100
-    is_parallel = False
+    is_parallel = True
     pts_depth = 2
-    pts_instances = 10
+    pts_instances = 24
     pts_player = PrunedTreeSearch(max_depth=pts_depth, instances=pts_instances, parallel=is_parallel)
-    for i, player2 in enumerate(policies):
-        sub_string = "parallel" if is_parallel else "sequential"
-        sub_string += f"_{pts_depth}_{pts_instances}" if is_parallel else f"_{pts_depth}"
-        print(f"{i+1:.0f}/{n:.0f}: PrunedTreeSearch_{sub_string} vs {policies_names[i]}")
+    if __name__ == '__main__':
+        for i, player2 in enumerate(policies):
+            sub_string = "parallel" if is_parallel else "sequential"
+            sub_string += f"_{pts_depth}_{pts_instances}" if is_parallel else f"_{pts_depth}"
+            print(f"{i+1:.0f}/{n:.0f}: PrunedTreeSearch_{sub_string} vs {policies_names[i]}")
 
-        scraping_data.run_and_update_battle(pts_player, player2,
-                folder=f"data/sequential/pts_{sub_string}",
-                n_to_emulate=n_battles,
-                max_battles_in_file=n_battles_per_file,
-                verbose=True)
+            scraping_data.run_and_update_battle(pts_player, player2,
+                    folder=f"data/sequential/pts_{sub_string}",
+                    n_to_emulate=n_battles,
+                    max_battles_in_file=n_battles_per_file,
+                    verbose=True)
 
