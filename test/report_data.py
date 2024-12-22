@@ -14,7 +14,7 @@ policies = [RandomPlayer(), OneTurnLookahead(), TypeSelector(), BreadthFirstSear
 policies_names = [policy.__class__.__name__ for policy in policies]
 n = len(policies)
 
-mode = "parallel"
+mode = "pts_sequential"
 
 # Running in parallel, pruned tree search must be run sequentially to avoid conflicts
 if mode == "parallel":
@@ -38,7 +38,7 @@ if mode == "parallel":
                     n_processes=n_processes,
                     max_battles_in_file=n_battles_per_file,
                     verbose=True)
-# Running sequentially excluded PrunedTreeSearch
+# Running sequentially excluding PrunedTreeSearch
 elif mode == "sequential":
     policies = [RandomPlayer(), OneTurnLookahead(), TypeSelector(), BreadthFirstSearch(),
              PrunedBFS(), TunedTreeTraversal(), Heuristical()]
@@ -65,13 +65,16 @@ elif mode == "pts_sequential":
     n = len(policies)
     n_battles = 100
     n_battles_per_file = 100
-    pts_depth = 3
-    pts_instances = 20
-    pts_player = PrunedTreeSearch(max_depth=pts_depth, instances=pts_instances, parallel=True)
+    is_parallel = False
+    pts_depth = 2
+    pts_instances = 1
+    pts_player = PrunedTreeSearch(max_depth=pts_depth, instances=pts_instances, parallel=is_parallel)
     for i, player2 in enumerate(policies):
-        print(f"{i+1:.0f}/{n:.0f}: PrunedTreeSearch_{pts_depth}_{pts_instances} vs {policies_names[i]}")
+        sub_string = "parallel" if is_parallel else "sequential"
+        sub_string += f"_{pts_depth}_{pts_instances}" if is_parallel else f"_{pts_depth}"
+        print(f"{i+1:.0f}/{n:.0f}: PrunedTreeSearch_{sub_string} vs {policies_names[i]}")
         scraping_data.run_and_update_battle(pts_player, player2,
-                folder=f"data/sequential/pts_{pts_depth}_{pts_instances}",
+                folder=f"data/sequential/pts_{sub_string}",
                 n_to_emulate=n_battles,
                 max_battles_in_file=n_battles_per_file,
                 verbose=True)
