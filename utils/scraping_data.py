@@ -110,6 +110,8 @@ def run_battle(policy1, policy2, turns_limit=100, time_limit=1000, verbose=False
     else:
         battle_data["result"] = 2
         if verbose: print("Battle took too long!")
+
+    battle_data["commands"] = env.commands
     
     return battle_data
 
