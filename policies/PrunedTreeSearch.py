@@ -75,7 +75,7 @@ class PrunedTreeSearch(BattlePolicy):
     
         moves = [0 for _ in range(DEFAULT_N_ACTIONS)]
         
-        if self.parallel:
+        if self.parallel and __name__ == '__main__':
             with Pool() as pool:
                 results = pool.map(self.estimate_move, [(env, depth) for i in range(instances)], chunksize=1)
         else:

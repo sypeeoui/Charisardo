@@ -1,4 +1,5 @@
 import sys, os
+from multiprocessing import freeze_support
 # add relative parent directory to path
 sys.path.append(os.path.dirname(os.getcwd()))
 
@@ -6,7 +7,7 @@ sys.path.append(os.path.dirname(os.getcwd()))
 from vgc.behaviour.BattlePolicies import *
 import utils.scraping_data as scraping_data
 from policies.PrunedTreeSearch import PrunedTreeSearch
-from policies.Heruristical import Heuristical
+from policies.Heuristical import Heuristical
 
 # Define the policies to compare
 policies = [RandomPlayer(), OneTurnLookahead(), TypeSelector(), BreadthFirstSearch(),
@@ -67,12 +68,13 @@ elif mode == "pts_sequential":
     n_battles_per_file = 100
     is_parallel = False
     pts_depth = 2
-    pts_instances = 1
+    pts_instances = 10
     pts_player = PrunedTreeSearch(max_depth=pts_depth, instances=pts_instances, parallel=is_parallel)
     for i, player2 in enumerate(policies):
         sub_string = "parallel" if is_parallel else "sequential"
         sub_string += f"_{pts_depth}_{pts_instances}" if is_parallel else f"_{pts_depth}"
         print(f"{i+1:.0f}/{n:.0f}: PrunedTreeSearch_{sub_string} vs {policies_names[i]}")
+
         scraping_data.run_and_update_battle(pts_player, player2,
                 folder=f"data/sequential/pts_{sub_string}",
                 n_to_emulate=n_battles,
