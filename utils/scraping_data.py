@@ -60,12 +60,39 @@ def run_battle(policy1, policy2, turns_limit=100, time_limit=1000, verbose=False
         "turns_time_p1": [],
         "turns_time_p2": [],
         "log": [],
-        "eval": []
+        "eval": [],
+        "team1": [],
+        "team2": [],
     }
     
     random_team_generator = OwnRandomTeamGenerator()
     team1 = random_team_generator.get_team().get_battle_team([0, 1, 2])
     team2 = random_team_generator.get_team().get_battle_team([0, 1, 2])
+    for pkm in [team1.active, team1.party[0], team1.party[1]]:
+        pkm_dict = {}
+        pkm_dict["max_hp"] = pkm.max_hp
+        pkm_dict["moves"] = []
+        for move in pkm.moves:
+            move_dict = {}
+            move_dict["power"] = move.power
+            move_dict["accuracy"] = move.acc
+            move_dict["type"] = move.type
+            move_dict["max_pp"] = move.max_pp
+            pkm_dict["moves"].append(move_dict)
+        battle_data["team1"].append(pkm_dict)
+    for pkm in [team2.active, team2.party[0], team2.party[1]]:
+        pkm_dict = {}
+        pkm_dict["max_hp"] = pkm.max_hp
+        pkm_dict["moves"] = []
+        for move in pkm.moves:
+            move_dict = {}
+            move_dict["power"] = move.power
+            move_dict["accuracy"] = move.acc
+            move_dict["type"] = move.type
+            move_dict["max_pp"] = move.max_pp
+            pkm_dict["moves"].append(move_dict)
+        battle_data["team2"].append(pkm_dict)    
+    
     agent1, agent2 = policy1, policy2
 
     env = MyPkmEnv((team1, team2),
