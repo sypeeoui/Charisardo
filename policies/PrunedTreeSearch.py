@@ -21,14 +21,29 @@ class PrunedTreeSearch(BattlePolicy):
     Agent that uses Pruned Tree Search to select actions.
     """
 
-    def __init__(self, weights: list[float] = [1.0, 1.0], max_depth: int = 3):
+    def __init__(self, weights: list[float] = [1.0, 1.0], max_depth: int = 2, instances: int = 50, parallel: bool = True):
         self.weights = weights
         # self.min_depth = min_depth
         self.alpha = float('-inf')
         self.beta = float('inf')
         self.max_depth = max_depth
+        self.instances = instances
+        self.parallel = parallel
 
     def game_state_eval(self, g: PkmBattleEnv):
+        """
+        Evaluates the current game state of a Pokémon battle.
+        This function calculates the health points (HP) of both the player's team and the opponent's team,
+        and returns a score based on the ratio of current HP to maximum HP for both teams. The score is 
+        weighted by the `self.weights` attribute.
+        Args:
+            g (PkmBattleEnv): The current game environment, which includes the teams and their statuses.
+        Returns:
+            float: A score representing the evaluation of the game state. Returns -1 if the player's team 
+                   has no remaining HP, 1 if the opponent's team has no remaining HP, or a weighted score 
+                   based on the HP ratios otherwise.
+        """
+
         my_team = g.teams[0]
         opp_team = g.teams[1]
         my_sum_hp = my_team.active.hp + sum([p.hp for p in my_team.party])
@@ -45,7 +60,7 @@ class PrunedTreeSearch(BattlePolicy):
         # print(f"Max HP: {my_sum_max_hp}, {opp_sum_max_hp}")
         return my_sum_hp / my_sum_max_hp * self.weights[0] - opp_sum_hp / opp_sum_max_hp * self.weights[1]
 
-    def get_action(self, env: PkmBattleEnv, depth: int = 2, instances: int = 50) -> int:
+    def get_action(self, env: PkmBattleEnv) -> int:
         """
         Determines the best action to take in the given environment using a pruned tree search.
         Args:
@@ -55,10 +70,16 @@ class PrunedTreeSearch(BattlePolicy):
         Returns:
             int: The index of the best action to take.
         """
+        depth = self.max_depth
+        instances = self.instances
+    
         moves = [0 for _ in range(DEFAULT_N_ACTIONS)]
-
-        with Pool() as pool:
-            results = pool.map(self.estimate_move, [(env, depth) for i in range(instances)], chunksize=1)
+        
+        if self.parallel:
+            with Pool() as pool:
+                results = pool.map(self.estimate_move, [(env, depth) for i in range(instances)], chunksize=1)
+        else:
+            results = map(self.estimate_move, [(env, depth) for i in range(instances)])
 
         for result in results:
             moves[result] += 1
