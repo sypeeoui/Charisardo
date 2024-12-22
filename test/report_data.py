@@ -19,12 +19,12 @@ mode = "pts_sequential"
 
 # Running in parallel, pruned tree search must be run sequentially to avoid conflicts
 if mode == "parallel":
-    policies = [RandomPlayer(), OneTurnLookahead(), TypeSelector(), BreadthFirstSearch(),
-             PrunedBFS(), TunedTreeTraversal(), PrunedTreeSearch(parallel=False), Heuristical()] # PrunedTreeSearch() must be run sequentially
+    policies = [Heuristical(), RandomPlayer(), OneTurnLookahead(), TypeSelector(), BreadthFirstSearch(),
+             PrunedBFS(), TunedTreeTraversal()] # PrunedTreeSearch() must be run sequentially
     policies_names = [policy.__class__.__name__ for policy in policies]
     n = len(policies)
-    n_processes = 10
-    n_battles_per_process = 10
+    n_processes = 14
+    n_battles_per_process = 14
     n_battles_per_file = n_processes * n_battles_per_process
     if __name__ == '__main__': # to avoid multiprocessing error ??? I read it on stackoverflow
         for i, player2 in enumerate(policies):
@@ -68,7 +68,7 @@ elif mode == "pts_sequential":
     n_battles_per_file = 100
     is_parallel = True
     pts_depth = 2
-    pts_instances = 24
+    pts_instances = 14
     pts_player = PrunedTreeSearch(max_depth=pts_depth, instances=pts_instances, parallel=is_parallel)
     if __name__ == '__main__':
         for i, player2 in enumerate(policies):

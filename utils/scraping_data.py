@@ -20,6 +20,35 @@ import multiprocessing.pool
 #         "turns_time_p2": [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
 #     }]
 # }
+def game_state_eval(g: MyPkmEnv):
+    """
+    Evaluates the current game state of a Pokémon battle.
+    This function calculates the health points (HP) of both the player's team and the opponent's team,
+    and returns a score based on the ratio of current HP to maximum HP for both teams. The score is 
+    weighted by the `self.weights` attribute.
+    Args:
+        g (PkmBattleEnv): The current game environment, which includes the teams and their statuses.
+    Returns:
+        float: A score representing the evaluation of the game state. Returns -1 if the player's team 
+                has no remaining HP, 1 if the opponent's team has no remaining HP, or a weighted score 
+                based on the HP ratios otherwise.
+    """
+
+    my_team = g.teams[0]
+    opp_team = g.teams[1]
+    my_sum_hp = my_team.active.hp + sum([p.hp for p in my_team.party])
+    opp_sum_hp = opp_team.active.hp + sum([p.hp for p in opp_team.party])
+    my_sum_max_hp = my_team.active.max_hp + sum([p.max_hp for p in my_team.party])
+    opp_sum_max_hp = opp_team.active.max_hp + sum([p.max_hp for p in opp_team.party])
+    
+    if my_sum_hp == 0.0:
+        return float('-1')
+    elif opp_sum_hp == 0.0:
+        return float('1')
+    
+    # print(f"HP: {my_sum_hp}, {opp_sum_hp}")
+    # print(f"Max HP: {my_sum_max_hp}, {opp_sum_max_hp}")
+    return my_sum_hp / my_sum_max_hp - opp_sum_hp / opp_sum_max_hp
 
 # create a function that runs a battle between two policies and returns the battle data
 def run_battle(policy1, policy2, turns_limit=100, time_limit=1000, verbose=False):
@@ -29,7 +58,9 @@ def run_battle(policy1, policy2, turns_limit=100, time_limit=1000, verbose=False
         "turns": 0,
         "total_time": 0.0,
         "turns_time_p1": [],
-        "turns_time_p2": []
+        "turns_time_p2": [],
+        "log": [],
+        "eval": []
     }
     
     random_team_generator = OwnRandomTeamGenerator()
@@ -39,7 +70,7 @@ def run_battle(policy1, policy2, turns_limit=100, time_limit=1000, verbose=False
 
     env = MyPkmEnv((team1, team2),
                     encode=(agent1.requires_encode(), agent2.requires_encode()),
-                    debug=False)  # set new environment with teams
+                    debug=True)  # set new environment with teams
     
     battle_start_time = time.time()
     terminated = False
@@ -63,6 +94,10 @@ def run_battle(policy1, policy2, turns_limit=100, time_limit=1000, verbose=False
         
         actions = [action1, action2]
         _, _, terminated, _, _ = env.step(actions)
+        # print(env.log)
+        # print(f"Current eval: {game_state_eval(env)}")
+        battle_data["log"].append(env.log)
+        battle_data["eval"].append(game_state_eval(env))
         battle_data["turns"] += 1
 
     battle_data["total_time"] = time.time() - battle_start_time

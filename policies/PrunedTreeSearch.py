@@ -21,7 +21,7 @@ class PrunedTreeSearch(BattlePolicy):
     Agent that uses Pruned Tree Search to select actions.
     """
 
-    def __init__(self, weights: list[float] = [1.0, 1.0], max_depth: int = 2, instances: int = 50, parallel: bool = True):
+    def __init__(self, weights: list[float] = [1.0, 1.0], max_depth: int = 2, instances: int = 50, parallel: bool = True, debug: bool = True):
         self.weights = weights
         # self.min_depth = min_depth
         self.alpha = float('-inf')
@@ -29,6 +29,7 @@ class PrunedTreeSearch(BattlePolicy):
         self.max_depth = max_depth
         self.instances = instances
         self.parallel = parallel
+        self.debug = debug
 
     def game_state_eval(self, g: PkmBattleEnv):
         """
@@ -84,6 +85,9 @@ class PrunedTreeSearch(BattlePolicy):
         for result in results:
             moves[result] += 1
 
+        if self.debug:
+            print(f"confidence: {max(moves) / instances}")
+            print(f"moves: {moves}")
         return moves.index(max(moves))
 
     def estimate_move(self, params) -> int: 
