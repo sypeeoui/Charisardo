@@ -21,8 +21,9 @@ class OwnRandomTeamGenerator(PkmTeamGenerator):
         team: List[Pkm] = []
         for i in range(self.party_size + 1):
             p_type: PkmType = random.choice(LIST_OF_TYPES)
+            center_hp = 140
             # generate random hp with normal distribution but not less than 100
-            max_hp: float = min(max(50, np.random.normal(140, 50)), 240)
+            max_hp: float = min(max(50, np.random.normal(center_hp, 50)), 240)
             moves: List[PkmMove] = []
             for i in range(DEFAULT_PKM_N_MOVES):
                 # generate random type for move
@@ -30,7 +31,7 @@ class OwnRandomTeamGenerator(PkmTeamGenerator):
 
                 # generate random power for move with normal distribution, and balance it using max_hp. Power must be in range [1, +inf]
                 m_power: float = np.random.normal(80, 50)
-                m_power = max(1, m_power - (max_hp-300)/5)
+                m_power = max(1, m_power - (max_hp-center_hp)/3)
 
                 # generate random accuracy for move and balance it using max_hp and m_power. Accuracy must be in range [0.1, 1]
                 m_accuracy: float = np.random.normal(0.5, 0.2)

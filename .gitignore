@@ -164,3 +164,4 @@ cython_debug/
 # venv
 *venv/
 pokemon-vgc-engine
+test/**/*.json
