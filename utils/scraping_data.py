@@ -292,3 +292,68 @@ def run_and_update_battle_pool(policy1, policy2, folder="data", n_to_emulate_per
                 verbose) for i in range(n_processes)]
     with multiprocessing.Pool(n_processes) as pool:
         pool.starmap_async(run_and_update_battle_parallel_single_instance, tasks).get(999999)
+
+# UTILITIES TO GET STATISTICS FROM BATTLE DATA
+def get_avg_turn_time_per_turn(battle_data, max_turn=None, threshold=0):
+    '''Get the average turn time per turn from battle data
+    
+    Args:
+        battle_data (dict): the battle data
+        max_turn (int): the maximum number of turns to consider
+        threshold (int): the minimum number of battles that had to reach a turn to consider it
+    
+    Returns:
+        list: the average turn time per turn
+    '''
+    avg_turn_time_per_turn = [[],[]]
+    count = []
+    for battle in battle_data["battles"]:
+        for i, (time1, time2) in enumerate(zip(battle["turns_time_p1"], battle["turns_time_p2"])):
+            if max_turn is not None and i >= max_turn:
+                break
+            if i >= len(avg_turn_time_per_turn[0]):
+                avg_turn_time_per_turn[0].append(0)
+                avg_turn_time_per_turn[1].append(0)
+                count.append(0)
+            avg_turn_time_per_turn[0][i] += time1
+            avg_turn_time_per_turn[1][i] += time2
+            count[i] += 1
+    for i in range(len(avg_turn_time_per_turn[0])):
+        avg_turn_time_per_turn[0][i] /= count[i]
+        avg_turn_time_per_turn[1][i] /= count[i]
+    # remove turns after first outlier
+    for i in range(len(avg_turn_time_per_turn[0])):
+        if count[i] < threshold:
+            avg_turn_time_per_turn[0] = avg_turn_time_per_turn[0][:i]
+            avg_turn_time_per_turn[1] = avg_turn_time_per_turn[1][:i]
+    return avg_turn_time_per_turn
+
+def get_games_per_turn_count(battle_data):
+    '''Get the number of games that reached each turn from battle data
+    
+    Args:
+        battle_data (dict): the battle data
+    
+    Returns:
+        list: the number of games that reached each turn
+    '''
+    games_per_turn_count = []
+    for battle in battle_data["battles"]:
+        if len(games_per_turn_count) < battle["turns"]:
+            games_per_turn_count += [0] * (battle["turns"] - len(games_per_turn_count))
+        games_per_turn_count[battle["turns"]-1] += 1
+    return games_per_turn_count
+
+def get_all_game_state_evals(battle_data):
+    '''Get all game state evaluations from battle data as list of lists
+
+    Args:
+        battle_data (dict): the battle data
+
+    Returns:
+        list: the game state evaluations
+    '''
+    all_game_state_evals = []
+    for battle in battle_data["battles"]:
+        all_game_state_evals.append(battle["eval"])
+    return all_game_state_evals
