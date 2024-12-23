@@ -98,7 +98,8 @@ def run_battle(policy1, policy2, turns_limit=100, time_limit=1000, verbose=False
     env = MyPkmEnv((team1, team2),
                     encode=(agent1.requires_encode(), agent2.requires_encode()),
                     debug=True)  # set new environment with teams
-    
+    s, _ = env.reset()
+
     battle_start_time = time.time()
     terminated = False
     while not terminated:
@@ -108,19 +109,19 @@ def run_battle(policy1, policy2, turns_limit=100, time_limit=1000, verbose=False
             break
 
         choice_time_1_start = time.time()
-        action1 = agent1.get_action(env)
+        action1 = agent1.get_action(s[0])
         choice_time_1 = time.time() - choice_time_1_start
         battle_data["turns_time_p1"].append(choice_time_1)
         if verbose: print(f"Turn {battle_data['turns']+1} - Player 1 took choice in {choice_time_1:.4f}s")
 
         choice_time_2_start = time.time()
-        action2 = agent2.get_action(env)
+        action2 = agent2.get_action(s[1])
         choice_time_2 = time.time() - choice_time_2_start
         battle_data["turns_time_p2"].append(choice_time_2)
         if verbose: print(f"Turn {battle_data['turns']+1} - Player 2 took choice in {choice_time_2:.4f}s")
         
         actions = [action1, action2]
-        _, _, terminated, _, _ = env.step(actions)
+        s, _, terminated, _, _ = env.step(actions)
         # print(env.log)
         # print(f"Current eval: {game_state_eval(env)}")
         battle_data["log"].append(env.log)
