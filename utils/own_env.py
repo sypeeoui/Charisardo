@@ -2,6 +2,7 @@ import random
 from vgc.engine.PkmBattleEnv import PkmBattleEnv
 from typing import Tuple
 from multiprocessing.connection import Client
+from copy import deepcopy
 
 from vgc.competition.StandardPkmMoves import Struggle
 from vgc.datatypes.Constants import DEFAULT_PKM_N_MOVES, MAX_HIT_POINTS, STATE_DAMAGE, SPIKES_2, SPIKES_3, \
@@ -10,7 +11,7 @@ from vgc.datatypes.Objects import PkmTeam, Pkm, GameState, Weather
 from vgc.datatypes.Types import WeatherCondition, PkmEntryHazard, PkmType, PkmStatus, PkmStat, N_HAZARD_STAGES, \
     MIN_STAGE, MAX_STAGE
 from vgc.engine.HiddenInformation import set_pkm
-from vgc.util.Encoding import GAME_STATE_ENCODE_LEN, partial_encode_game_state
+from vgc.util.Encoding import GAME_STATE_ENCODE_LEN, partial_encode_game_state, encode_game_state
 
 class MyPkmEnv(PkmBattleEnv):
     def __init__(self, teams: Tuple[PkmTeam, PkmTeam], weather=Weather(), debug: bool = False, conn: Client = None,
@@ -41,4 +42,27 @@ class MyPkmEnv(PkmBattleEnv):
             order = [0, 1]
             random.shuffle(order)
         return order[0], order[1]
+    
+    def _PkmBattleEnv__get_forward_env(self, player: int):
+        """
+        Get the next environment state after the current action.
+        :return: next environment state
+        """
+        # print("getting forward env with my function")
+        # return self
+        # print("sono dentro")
+        
+        env = MyPkmEnv((deepcopy(self.teams[player]), deepcopy(self.teams[not player])), deepcopy(self.weather),
+                           encode=self.requires_encode)
+        env.n_turns_no_clear = self.n_turns_no_clear
+        env.turn = self.turn
+        env.winner = self.winner
+        # print(f"BBBBBB\n{env.teams[0].__str__()}\nBBBBBB")
+        # print(f"BBBBBB\n{env.teams[1].__str__()}\nBBBBBB")
+        # print(env.teams[1].__str__())
+        # print("fuori")
+        return env
+
+        
+        
 
