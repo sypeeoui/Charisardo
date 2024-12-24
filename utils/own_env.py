@@ -62,6 +62,9 @@ class MyPkmEnv(PkmBattleEnv):
         # print(env.teams[1].__str__())
         # print("fuori")
         return env
+    
+    def get_states(self):
+        return self._PkmBattleEnv__get_states()
 
         
         

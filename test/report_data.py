@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.getcwd()))
 
 from vgc.behaviour.BattlePolicies import *
 import utils.scraping_data as scraping_data
-from policies.PrunedTreeSearch import PrunedTreeSearch
+from policies.PrunedTreeSearch import PrunedTreeSearch, PrunedTreeSearch2
 from policies.Heuristical import Heuristical
 from policies.WeightedGreedy import WeightedGreedy, WeightedGreedy2
 
@@ -16,7 +16,7 @@ policies = [RandomPlayer(), OneTurnLookahead(), TypeSelector(), BreadthFirstSear
 policies_names = [policy.__class__.__name__ for policy in policies]
 n = len(policies)
 
-mode = "wg_parallel"
+mode = "pts_sequential"
 
 # Running in parallel, pruned tree search must be run sequentially to avoid conflicts
 if mode == "parallel":
@@ -65,16 +65,16 @@ elif mode == "sequential":
             
 # Running sequentially with PrunedTreeSearch
 elif mode == "pts_sequential":
-    policies = [OneTurnLookahead(), RandomPlayer(), TypeSelector(), BreadthFirstSearch(),
+    policies = [TypeSelector(), WeightedGreedy(), WeightedGreedy2(), OneTurnLookahead(), RandomPlayer(), BreadthFirstSearch(),
              PrunedBFS(), TunedTreeTraversal(), Heuristical()]
     policies_names = [policy.__class__.__name__ for policy in policies]
     n = len(policies)
     n_battles = 100
     n_battles_per_file = 100
     is_parallel = True
-    pts_depth = 2
+    pts_depth = 3
     pts_instances = 14
-    pts_player = PrunedTreeSearch(max_depth=pts_depth, instances=pts_instances, parallel=is_parallel)
+    pts_player = PrunedTreeSearch2(max_depth=pts_depth, instances=pts_instances, parallel=is_parallel)
     if __name__ == '__main__':
         for i, player2 in enumerate(policies):
             sub_string = "parallel" if is_parallel else "sequential"
