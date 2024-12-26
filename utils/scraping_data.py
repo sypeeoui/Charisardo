@@ -3,11 +3,13 @@ import signal
 import time
 import sys
 import os
-from utils import OwnRandomTeamGenerator, MyPkmEnv
+from utils import OwnRandomTeamGenerator, MyPkmEnv, OwnRandomTeamGenerator2
 import multiprocessing
 import multiprocessing.pool
 
+from vgc.util.generator.PkmTeamGenerators import RandomTeamGenerator
 
+TeamGenerator = OwnRandomTeamGenerator
 # JSON FORMAT FOR DATA OF POLICY vs POLICY
 # {
 #     "policies_names": ["policy1_name", "policy2_name"],
@@ -51,7 +53,7 @@ def game_state_eval(g: MyPkmEnv):
     return my_sum_hp / my_sum_max_hp - opp_sum_hp / opp_sum_max_hp
 
 # create a function that runs a battle between two policies and returns the battle data
-def run_battle(policy1, policy2, turns_limit=100, time_limit=1000, verbose=False):
+def run_battle(team1, team2, policy1, policy2, turns_limit=100, time_limit=1000, verbose=False):
     # create the battle data
     battle_data = {
         "result": 2,
@@ -64,10 +66,7 @@ def run_battle(policy1, policy2, turns_limit=100, time_limit=1000, verbose=False
         "team1": [],
         "team2": [],
     }
-    
-    random_team_generator = OwnRandomTeamGenerator()
-    team1 = random_team_generator.get_team().get_battle_team([0, 1, 2])
-    team2 = random_team_generator.get_team().get_battle_team([0, 1, 2])
+
     for pkm in [team1.active, team1.party[0], team1.party[1]]:
         pkm_dict = {}
         pkm_dict["max_hp"] = pkm.max_hp
@@ -94,7 +93,6 @@ def run_battle(policy1, policy2, turns_limit=100, time_limit=1000, verbose=False
         battle_data["team2"].append(pkm_dict)    
     
     agent1, agent2 = policy1, policy2
-
     env = MyPkmEnv((team1, team2),
                     encode=(agent1.requires_encode(), agent2.requires_encode()),
                     debug=True)  # set new environment with teams
@@ -124,6 +122,7 @@ def run_battle(policy1, policy2, turns_limit=100, time_limit=1000, verbose=False
         s, _, terminated, _, _ = env.step(actions)
         # print(env.log)
         # print(f"Current eval: {game_state_eval(env)}")
+        print("actions: ", actions)
         battle_data["log"].append(env.log)
         battle_data["eval"].append(game_state_eval(env))
         battle_data["turns"] += 1
@@ -198,11 +197,22 @@ def run_and_update_battle(policy1, policy2, folder="data", n_to_emulate=100, max
 
     while n_emulated < n_to_emulate and data["n_battles_emulated"] < max_battles_in_file:
         if verbose: print(f"Emulating battle {n_emulated + 1}/{n_to_emulate} (total {data['n_battles_emulated']+1}/{max_battles_in_file}) between {policy1_name} and {policy2_name}")
-        battle_data = run_battle(policy1, policy2, turns_limit, time_limit, verbose)
+        random_team_generator = TeamGenerator()
+        team1 = random_team_generator.get_team().get_battle_team([0, 1, 2])
+        team2 = random_team_generator.get_team().get_battle_team([0, 1, 2])
+
+        battle_data = run_battle(team1, team2, policy1, policy2, turns_limit, time_limit, verbose)
 
         data["battles"].append(battle_data)
         data["n_battles_emulated"] += 1
         n_emulated += 1
+
+        battle_data = run_battle(team2, team1, policy1, policy2, turns_limit, time_limit, verbose)
+
+        data["battles"].append(battle_data)
+        data["n_battles_emulated"] += 1
+        n_emulated += 1
+
         # make sure that data is safe in case of keyboard interrupt
         with open(file_path, "w") as file:
             json.dump(data, file, indent=4)
@@ -244,13 +254,21 @@ def run_and_update_battle_parallel_single_instance(task_number, policy1, policy2
 
     while n_emulated < n_to_emulate:
         if verbose: print(f"Task {task_number:03}: Emulating battle {n_emulated + 1}/{n_to_emulate} between {policy1_name} and {policy2_name}")
-        battle_data = run_battle(policy1, policy2, turns_limit, time_limit, False)
+        random_team_generator = TeamGenerator()
+        team1 = random_team_generator.get_team().get_battle_team([0, 1, 2])
+        team2 = random_team_generator.get_team().get_battle_team([0, 1, 2])
+
+        battle_data = run_battle(team1, team2, policy1, policy2, turns_limit, time_limit, verbose)
+
+        battle_data2 = run_battle(team2, team1, policy1, policy2, turns_limit, time_limit, verbose)
 
         with lock:
             data = get_battle_data(policy1, policy2, folder=folder)
             data["battles"].append(battle_data)
-            data["n_battles_emulated"] += 1
-            n_emulated += 1
+            data["battles"].append(battle_data2)
+
+            data["n_battles_emulated"] += 2
+            n_emulated += 2
             if data["n_battles_emulated"] > max_battles_in_file:
                 if verbose: print(f"Task {task_number:03}: Maximum number of battles ({max_battles_in_file}) reached")
                 break

@@ -421,8 +421,20 @@ class PrunedTreeSearch2(PrunedTreeSearch):
                 max_player_node.parent = node
                 max_player_node.depth = node.depth - 1
                 min_player_node1 = self.alpha_beta(max_player_node, alpha, beta, False)
-                
-                avg = min_player_node1.eval
+               
+                if i < 4 and node.env.teams[1].active.moves[i].real_acc < 0.9:
+                    max_player_node = Node()
+                    max_player_node.move = 99
+                    max_player_node.env = deepcopy(node.env)
+                    max_player_node.parent = node
+                    max_player_node.depth = node.depth - 1
+                    min_player_node2 = self.alpha_beta(max_player_node, alpha, beta, False)
+
+                    eval1 = min_player_node1.eval * node.env.teams[0].active.moves[i].real_acc
+                    eval2 = min_player_node2.eval * (1 - node.env.teams[0].active.moves[i].real_acc)
+                    avg = eval1 + eval2
+                else:
+                    avg = min_player_node1.eval
 
                 if avg > best_node.eval:
                     best_node = max_player_node
@@ -451,7 +463,20 @@ class PrunedTreeSearch2(PrunedTreeSearch):
                 min_player_node.env.step([node.move, i])
                 max_player_node1 = self.alpha_beta(min_player_node, alpha, beta, True)
                 
-                avg = max_player_node1.eval
+                if i < 4 and node.env.teams[1].active.moves[i].real_acc < 0.9:
+                    min_player_node = Node()
+                    min_player_node.move = 99
+                    min_player_node.env = deepcopy(node.env)
+                    min_player_node.parent = node
+                    min_player_node.depth = node.depth - 1
+                    min_player_node.env.step([node.move, 99])
+                    max_player_node2 = self.alpha_beta(min_player_node, alpha, beta, True)
+
+                    eval1 = max_player_node1.eval * node.env.teams[1].active.moves[i].real_acc
+                    eval2 = max_player_node2.eval * (1 - node.env.teams[1].active.moves[i].real_acc)
+                    avg = eval1 + eval2
+                else:
+                    avg = max_player_node1.eval
 
                 if avg < best_node.eval:
                     best_node = min_player_node

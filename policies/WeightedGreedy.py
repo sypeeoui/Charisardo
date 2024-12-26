@@ -55,13 +55,13 @@ class WeightedGreedy(BattlePolicy):
             g = deepcopy(env)
             g.step((move, SKIP))
             damage, _ = get_greedy(g)
-            best_choices.append((damage / 2, move))
+            best_choices.append((damage / 1.8, move))
         best = max(best_choices)
         # print(best)
         return best[1]
     
 class WeightedGreedy2(BattlePolicy):
-    def __init__(self):
+    def __init__(self, weight: list[float] = [1.7, 1.9]):
         pass
       
     def get_action(self, env: PkmBattleEnv) -> int:
