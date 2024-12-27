@@ -3,7 +3,7 @@ import signal
 import time
 import sys
 import os
-from utils import OwnRandomTeamGenerator, MyPkmEnv, OwnRandomTeamGenerator2
+from utils import OwnRandomTeamGenerator, MyPkmEnv #, OwnRandomTeamGenerator2
 import multiprocessing
 import multiprocessing.pool
 
@@ -312,13 +312,15 @@ def run_and_update_battle_pool(policy1, policy2, folder="data", n_to_emulate_per
         pool.starmap_async(run_and_update_battle_parallel_single_instance, tasks).get(999999)
 
 # UTILITIES TO GET STATISTICS FROM BATTLE DATA
-def get_avg_turn_time_per_turn(battle_data, max_turn=None, threshold=0):
+def get_avg_turn_time_per_turn(battle_data, max_turn=None, threshold=0, battle_type='all', player=0):
     '''Get the average turn time per turn from battle data
     
     Args:
         battle_data (dict): the battle data
         max_turn (int): the maximum number of turns to consider
         threshold (int): the minimum number of battles that had to reach a turn to consider it
+        battle_type (str): ['all', 'won', 'lost'] outcome considered
+        player (int): player considered
     
     Returns:
         list: the average turn time per turn
@@ -326,6 +328,12 @@ def get_avg_turn_time_per_turn(battle_data, max_turn=None, threshold=0):
     avg_turn_time_per_turn = [[],[]]
     count = []
     for battle in battle_data["battles"]:
+        
+        if battle_type == 'won':
+            if battle["result"] != player: continue
+        if battle_type == 'lost':
+            if battle["result"] == player: continue
+
         for i, (time1, time2) in enumerate(zip(battle["turns_time_p1"], battle["turns_time_p2"])):
             if max_turn is not None and i >= max_turn:
                 break
@@ -346,17 +354,24 @@ def get_avg_turn_time_per_turn(battle_data, max_turn=None, threshold=0):
             avg_turn_time_per_turn[1] = avg_turn_time_per_turn[1][:i]
     return avg_turn_time_per_turn
 
-def get_games_per_turn_count(battle_data):
-    '''Get the number of games that reached each turn from battle data
+def get_games_per_turn_count(battle_data, battle_type='all', player=0):
+    '''Get the number of (all, won, lost) games that reached each turn from battle data
     
     Args:
         battle_data (dict): the battle data
+        battle_type (str): ['all', 'won', 'lost'] outcome considered
+        player (int): player considered
     
     Returns:
         list: the number of games that reached each turn
     '''
     games_per_turn_count = []
     for battle in battle_data["battles"]:
+        if battle_type == 'won':
+            if battle["result"] != player: continue
+        if battle_type == 'lost':
+            if battle["result"] == player: continue
+
         if len(games_per_turn_count) < battle["turns"]:
             games_per_turn_count += [0] * (battle["turns"] - len(games_per_turn_count))
         games_per_turn_count[battle["turns"]-1] += 1
