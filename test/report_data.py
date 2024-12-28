@@ -16,7 +16,7 @@ policies = [RandomPlayer(), OneTurnLookahead(), TypeSelector(), BreadthFirstSear
 policies_names = [policy.__class__.__name__ for policy in policies]
 n = len(policies)
 
-mode = "pts_sequential"
+mode = "parallel"
 
 # Running in parallel, pruned tree search must be run sequentially to avoid conflicts
 if mode == "parallel":
@@ -24,8 +24,8 @@ if mode == "parallel":
              PrunedBFS(), TunedTreeTraversal(), WeightedGreedy()] # PrunedTreeSearch() must be run sequentially
     policies_names = [policy.__class__.__name__ for policy in policies]
     n = len(policies)
-    n_processes = 20
-    n_battles_per_process = 20
+    n_processes = 16
+    n_battles_per_process = 32
     n_battles_per_file = n_processes * n_battles_per_process
     if __name__ == '__main__': # to avoid multiprocessing error ??? I read it on stackoverflow
         for i, player2 in enumerate(policies):
@@ -34,7 +34,7 @@ if mode == "parallel":
                     continue
                 # if i != j:
                 #     continue
-                print(f"{(i)*(i+1)/2+j+1:.0f}/{n*(n+1)/2:.0f}: {policies_names[i]} vs {policies_names[j]}")
+                #print(f"{(i)*(i+1)/2+j+1:.0f}/{n*(n+1)/2:.0f}: {policies_names[i]} vs {policies_names[j]}")
 
                 scraping_data.run_and_update_battle_pool(player2, player1,
                     folder=f"data/parallel/{n_processes}_{n_battles_per_process}",
@@ -55,7 +55,7 @@ elif mode == "sequential":
         for j, player1 in enumerate(policies):
             if i < j: # only play each pair once
                 continue
-            print(f"{(i)*(i+1)/2+j+1:.0f}/{n*(n+1)/2:.0f}: {policies_names[i]} vs {policies_names[j]}")
+            #print(f"{(i)*(i+1)/2+j+1:.0f}/{n*(n+1)/2:.0f}: {policies_names[i]} vs {policies_names[j]}")
 
             scraping_data.run_and_update_battle(player2, player1,
                 folder=f"data/sequential/all_except_pts",
@@ -79,7 +79,7 @@ elif mode == "pts_sequential":
         for i, player2 in enumerate(policies):
             sub_string = "parallel" if is_parallel else "sequential"
             sub_string += f"_{pts_depth}_{pts_instances}" if is_parallel else f"_{pts_depth}"
-            print(f"{i+1:.0f}/{n:.0f}: PrunedTreeSearch_{sub_string} vs {policies_names[i]}")
+            #print(f"{i+1:.0f}/{n:.0f}: PrunedTreeSearch_{sub_string} vs {policies_names[i]}")
 
             scraping_data.run_and_update_battle(pts_player, player2,
                     folder=f"data/sequential/pts_{sub_string}",
@@ -97,7 +97,7 @@ elif mode == "wg_sequential":
     n_battles_per_file = 100
     wg_player = WeightedGreedy2()
     for i, player2 in enumerate(policies):
-        print(f"{i+1:.0f}/{n:.0f}: WeightedGreedy vs {policies_names[i]}")
+        #print(f"{i+1:.0f}/{n:.0f}: WeightedGreedy vs {policies_names[i]}")
 
         scraping_data.run_and_update_battle(wg_player, player2,
                 folder=f"data/sequential/wg",
@@ -116,7 +116,7 @@ elif mode == "wg_parallel":
     wg_player = WeightedGreedy2()
     if __name__ == '__main__':
         for i, player2 in enumerate(policies):
-            print(f"{i+1:.0f}/{n:.0f}: WeightedGreedy vs {policies_names[i]}")
+            #print(f"{i+1:.0f}/{n:.0f}: WeightedGreedy vs {policies_names[i]}")
 
             scraping_data.run_and_update_battle_pool(wg_player, player2,
                 folder=f"data/parallel/wg",
