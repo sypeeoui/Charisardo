@@ -7,7 +7,7 @@ from vgc.engine.PkmBattleEnv import PkmBattleEnv
 from vgc.datatypes.Types import PkmStat, PkmType, WeatherCondition
 from multiprocessing import Pool
 
-from policies.WeightedGreedy import get_greedy
+from policies.WeightedGreedy import get_greedy, WeightedGreedy
 from utils import MyPkmEnv
 
 class Node:
@@ -86,7 +86,7 @@ class PrunedTreeSearch(BattlePolicy):
             results = map(self.estimate_move, [(env, depth) for i in range(instances)])
 
         for result in results:
-            moves[result] += 1
+                moves[result] += 1     
 
         if self.debug:
             print(f"confidence: {max(moves) / instances}")
@@ -357,38 +357,6 @@ class PrunedTreeSearch2(PrunedTreeSearch):
     def __init__(self, weights: list[float] = [1.0, 1.0], max_depth: int = 2, instances: int = 50, parallel: bool = True, debug: bool = True):
         super().__init__(weights, max_depth, instances, parallel, debug)
 
-    def game_state_eval(self, g: PkmBattleEnv):
-        """
-        Evaluates the current game state of a Pokémon battle.
-        This function calculates the health points (HP) of both the player's team and the opponent's team,
-        and returns a score based on the ratio of current HP to maximum HP for both teams. The score is 
-        weighted by the `self.weights` attribute.
-        Args:
-            g (PkmBattleEnv): The current game environment, which includes the teams and their statuses.
-        Returns:
-            float: A score representing the evaluation of the game state. Returns -1 if the player's team 
-                   has no remaining HP, 1 if the opponent's team has no remaining HP, or a weighted score 
-                   based on the HP ratios otherwise.
-        """
-
-        my_team = g.teams[0]
-        opp_team = g.teams[1]
-        my_sum_hp = my_team.active.hp + sum([p.hp for p in my_team.party])
-        opp_sum_hp = opp_team.active.hp + sum([p.hp for p in opp_team.party])
-        my_sum_max_hp = my_team.active.max_hp + sum([p.max_hp for p in my_team.party])
-        opp_sum_max_hp = opp_team.active.max_hp + sum([p.max_hp for p in opp_team.party])
-        
-        if my_sum_hp == 0.0:
-            return float('-1')
-        elif opp_sum_hp == 0.0:
-            return float('1')
-        bonus = (- n_fainted(my_team) + n_fainted(opp_team)) * 0.1
-        
-        
-        # print(f"HP: {my_sum_hp}, {opp_sum_hp}")
-        # print(f"Max HP: {my_sum_max_hp}, {opp_sum_max_hp}")
-        return my_sum_hp / my_sum_max_hp * self.weights[0] - opp_sum_hp / opp_sum_max_hp * self.weights[1] + bonus
-
     def alpha_beta(self, node: Node, alpha: float, beta: float, maximizing_player: bool) -> Node:
         """
         Perform the alpha-beta pruning algorithm to find the best move for the current player.
@@ -422,7 +390,7 @@ class PrunedTreeSearch2(PrunedTreeSearch):
                 max_player_node.depth = node.depth - 1
                 min_player_node1 = self.alpha_beta(max_player_node, alpha, beta, False)
                
-                if i < 4 and node.env.teams[1].active.moves[i].real_acc < 0.9:
+                if i < 4 and node.env.teams[0].active.moves[move].real_acc < 0.9:
                     max_player_node = Node()
                     max_player_node.move = 99
                     max_player_node.env = deepcopy(node.env)
@@ -463,7 +431,7 @@ class PrunedTreeSearch2(PrunedTreeSearch):
                 min_player_node.env.step([node.move, i])
                 max_player_node1 = self.alpha_beta(min_player_node, alpha, beta, True)
                 
-                if i < 4 and node.env.teams[1].active.moves[i].real_acc < 0.9:
+                if i < 4 and node.env.teams[1].active.moves[move].real_acc < 0.9:
                     min_player_node = Node()
                     min_player_node.move = 99
                     min_player_node.env = deepcopy(node.env)
