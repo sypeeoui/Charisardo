@@ -10,13 +10,13 @@ import numpy as np
 
 SKIP = 99
 
-def get_greedy(env) -> tuple[int, float]:
+def get_greedy(env, opp_move=SKIP) -> tuple[int, float]:
     opp_hp_initial = env.teams[1].active.hp
     fainted = n_fainted(env.teams[1])
     damages = []
     for move in range(4):
         g = deepcopy(env)
-        g.step((move, SKIP))
+        g.step((move, opp_move))
         if n_fainted(g.teams[1]) > fainted:
             damages.append(opp_hp_initial * env.teams[0].active.moves[move].real_acc)
         else:
@@ -36,7 +36,8 @@ def n_fainted(t: PkmTeam):
     return fainted
 
 class WeightedGreedy(BattlePolicy):
-    def __init__(self):
+    def __init__(self, weight: list[float] = [1.85]):
+        self.weight = weight
         pass
                 
     def get_action(self, env: PkmBattleEnv) -> int:
@@ -55,13 +56,14 @@ class WeightedGreedy(BattlePolicy):
             g = deepcopy(env)
             g.step((move, SKIP))
             damage, _ = get_greedy(g)
-            best_choices.append((damage / 1.8, move))
+            best_choices.append((damage / self.weight[0], move))
         best = max(best_choices)
         # print(best)
         return best[1]
     
 class WeightedGreedy2(BattlePolicy):
-    def __init__(self, weight: list[float] = [1.7, 1.9]):
+    def __init__(self, weight: list[float] = [1.1, 1.3, 1.7]):
+        self.weight = weight
         pass
       
     def get_action(self, env: PkmBattleEnv) -> int:
@@ -103,9 +105,9 @@ class WeightedGreedy2(BattlePolicy):
             # print(new_env.teams[1].__str__())
             his_best_withchange = get_greedy(s[1])
             # print(f"#####\n{g.log}\n####")
-            val = (damage - (his_best_nochange[0] + his_best_withchange[0]) / 1.5) / 1.7
+            val = (damage - his_best_nochange[0] / self.weight[0] - his_best_withchange[0] / self.weight[1]) / self.weight[2]
             if val < 0:
-                val *= 1.5
+                val *= 2
             best_choices.append((val, move))
         
         best = max(best_choices)
