@@ -86,7 +86,7 @@ class PrunedTreeSearch(BattlePolicy):
             results = map(self.estimate_move, [(env, depth) for i in range(instances)])
 
         for result in results:
-                moves[result] += 1     
+            moves[result] += 1
 
         if self.debug:
             print(f"confidence: {max(moves) / instances}")

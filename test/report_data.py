@@ -6,26 +6,28 @@ sys.path.append(os.path.dirname(os.getcwd()))
 
 from vgc.behaviour.BattlePolicies import *
 import utils.scraping_data as scraping_data
-from policies.PrunedTreeSearch import PrunedTreeSearch, PrunedTreeSearch2
+from policies.PrunedTreeSearch import PrunedTreeSearch, PrunedTreeSearch2#, TreeSearchAgainst
 from policies.Heuristical import Heuristical
 from policies.WeightedGreedy import WeightedGreedy, WeightedGreedy2
-
+from policies.HayoBot.hayo5 import hayo5_BattlePolicy
+from policies.Punisher.Punisher  import Punisher
 # Define the policies to compare
 policies = [RandomPlayer(), OneTurnLookahead(), TypeSelector(), BreadthFirstSearch(),
              PrunedBFS(), TunedTreeTraversal(), PrunedTreeSearch(), Heuristical()]
 policies_names = [policy.__class__.__name__ for policy in policies]
 n = len(policies)
 
-mode = "parallel"
+mode = "pts_parallel"
 
 # Running in parallel, pruned tree search must be run sequentially to avoid conflicts
 if mode == "parallel":
-    policies = [Heuristical(), RandomPlayer(), OneTurnLookahead(), TypeSelector(), BreadthFirstSearch(),
-             PrunedBFS(), TunedTreeTraversal(), WeightedGreedy()] # PrunedTreeSearch() must be run sequentially
+    policies = [PrunedTreeSearch2(max_depth=2, instances=3, parallel=False), WeightedGreedy2(),OneTurnLookahead(), Heuristical(), RandomPlayer(), TypeSelector(), BreadthFirstSearch(),
+            PrunedBFS(), TunedTreeTraversal(), WeightedGreedy(), 
+            ] # PrunedTreeSearch() must be run sequentially
     policies_names = [policy.__class__.__name__ for policy in policies]
     n = len(policies)
-    n_processes = 16
-    n_battles_per_process = 32
+    n_processes = 20
+    n_battles_per_process = 30
     n_battles_per_file = n_processes * n_battles_per_process
     if __name__ == '__main__': # to avoid multiprocessing error ??? I read it on stackoverflow
         for i, player2 in enumerate(policies):
@@ -67,14 +69,15 @@ elif mode == "sequential":
 elif mode == "pts_sequential":
     policies = [TypeSelector(), WeightedGreedy(), WeightedGreedy2(), OneTurnLookahead(), RandomPlayer(), BreadthFirstSearch(),
              PrunedBFS(), TunedTreeTraversal(), Heuristical()]
-    policies_names = [policy.__class__.__name__ for policy in policies]
-    n = len(policies)
-    n_battles = 100
-    n_battles_per_file = 100
+    n_battles = 500
+    n_battles_per_file = 500
     is_parallel = True
-    pts_depth = 3
+    pts_depth = 2
     pts_instances = 14
     pts_player = PrunedTreeSearch2(max_depth=pts_depth, instances=pts_instances, parallel=is_parallel)
+    n = len(policies)
+    policies.append(pts_player)
+    policies_names = [policy.__class__.__name__ for policy in policies]
     if __name__ == '__main__':
         for i, player2 in enumerate(policies):
             sub_string = "parallel" if is_parallel else "sequential"
@@ -84,6 +87,32 @@ elif mode == "pts_sequential":
             scraping_data.run_and_update_battle(pts_player, player2,
                     folder=f"data/sequential/pts_{sub_string}",
                     n_to_emulate=n_battles,
+                    max_battles_in_file=n_battles_per_file,
+                    verbose=True)
+# Running sequentially with PrunedTreeSearch
+elif mode == "pts_parallel":
+    policies = [hayo5_BattlePolicy(), Punisher(), TypeSelector(), WeightedGreedy(), WeightedGreedy2(), OneTurnLookahead(), RandomPlayer(), BreadthFirstSearch(),
+             PrunedBFS(), TunedTreeTraversal(), Heuristical()]
+    n_battles = 600
+    n_battles_per_file = 600
+    n_processes = 20
+    is_parallel = False
+    pts_depth = 2
+    pts_instances = 3
+    pts_player = PrunedTreeSearch2(max_depth=pts_depth, instances=pts_instances, parallel=is_parallel)
+    n = len(policies)
+    policies.append(pts_player)
+    policies_names = [policy.__class__.__name__ for policy in policies]
+    if __name__ == '__main__':
+        for i, player2 in enumerate(policies):
+            sub_string = "parallel" if is_parallel else "sequential"
+            sub_string += f"_{pts_depth}_{pts_instances}" if is_parallel else f"_{pts_depth}"
+            print(f"{i+1:.0f}/{n:.0f}: PrunedTreeSearch_{sub_string} vs {policies_names[i]}")
+
+            scraping_data.run_and_update_battle_pool(pts_player, player2,
+                    folder=f"data/parallel/pts_{sub_string}",
+                    n_to_emulate_per_process=n_battles,
+                    n_processes=n_processes,
                     max_battles_in_file=n_battles_per_file,
                     verbose=True)
 
@@ -125,3 +154,21 @@ elif mode == "wg_parallel":
                 max_battles_in_file=n_battles_per_file,
                 verbose=True)
             
+elif mode == "ts_parallel":
+    policies = [WeightedGreedy()]
+    policies_names = [policy.__class__.__name__ for policy in policies]
+    n = len(policies)
+    n_processes = 20
+    n_battles_per_process = 6
+    n_battles_per_file = n_processes * n_battles_per_process
+    wg_player = TreeSearchAgainst(WeightedGreedy(), instances=3)
+    if __name__ == '__main__':
+        for i, player2 in enumerate(policies):
+            #print(f"{i+1:.0f}/{n:.0f}: WeightedGreedy vs {policies_names[i]}")
+
+            scraping_data.run_and_update_battle_pool(wg_player, player2,
+                folder=f"data/parallel/ts",
+                n_to_emulate_per_process=n_battles_per_process,
+                n_processes=n_processes,
+                max_battles_in_file=n_battles_per_file,
+                verbose=True)
