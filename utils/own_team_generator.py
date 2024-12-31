@@ -23,15 +23,15 @@ class OwnRandomTeamGenerator(PkmTeamGenerator):
             p_type: PkmType = random.choice(LIST_OF_TYPES)
             center_hp = 140
             # generate random hp with normal distribution but not less than 100
-            max_hp: float = min(max(50, np.random.normal(center_hp, 50)), 240)
+            max_hp: int = int(min(max(50, np.random.normal(center_hp, 50)), 240))
             moves: List[PkmMove] = []
             for i in range(DEFAULT_PKM_N_MOVES):
                 # generate random type for move
                 m_type: PkmType = random.choice(LIST_OF_TYPES)
 
                 # generate random power for move with normal distribution, and balance it using max_hp. Power must be in range [1, +inf]
-                m_power: float = np.random.normal(80, 50)
-                m_power = max(1, m_power - (max_hp-center_hp)/3)  
+                m_power: int = int(np.random.normal(80, 50))
+                m_power = int(max(1, m_power - (max_hp-center_hp)/3))
 
                 # generate random accuracy for move and balance it using max_hp and m_power. Accuracy must be in range [0.1, 1]
                 m_accuracy: float = np.random.normal(0.60, 0.15)
@@ -72,15 +72,15 @@ class OwnRandomTeamGenerator2(PkmTeamGenerator):
             p_type: PkmType = random.choice(LIST_OF_TYPES)
             center_hp = 140
             # generate random hp with normal distribution but not less than 100
-            max_hp: float = min(max(50, np.random.normal(center_hp, 50)), 240)
+            max_hp: int = int(min(max(50, np.random.normal(center_hp, 50)), 240))
             moves: List[PkmMove] = []
             for i in range(DEFAULT_PKM_N_MOVES):
                 # generate random type for move
                 m_type: PkmType = LIST_OF_TYPES[0] if random.random() < 0.2 else p_type if random.random() < 0.6 else random.choice(LIST_OF_TYPES)
 
                 # generate random power for move with normal distribution, and balance it using max_hp. Power must be in range [1, +inf]
-                m_power: float = np.random.normal(80, 50)
-                m_power = max(1, m_power - (max_hp-center_hp)/3)
+                m_power: int = int(np.random.normal(80, 50))
+                m_power = int(max(1, m_power - (max_hp-center_hp)/3))
 
                 # generate random accuracy for move and balance it using max_hp and m_power. Accuracy must be in range [0.1, 1]
                 m_accuracy: float = np.random.normal(0.5, 0.2)
